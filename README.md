@@ -155,3 +155,13 @@ CREATE TABLE IF NOT EXISTS endpoint_details (
     FOREIGN KEY (method_details_id) REFERENCES method_details(id)
 );
 ```
+
+## Future Enhancements
+
+The following features are planned for future releases:
+
+- **Web Interface**: Develop a browser-based dashboard for exploring and visualizing analysis results
+- **Documentation Export**: Support exporting analysis results to various formats including HTML, PDF, and Markdown
+- **CI/CD Integration**: Create plugins for popular CI/CD platforms to automatically update documentation when code changes
+- **Visual Diagrams**: Generate interactive diagrams showing class relationships and call hierarchies
+- **Multi-language Support**: Extend analysis capabilities to support additional programming languages beyond Java
