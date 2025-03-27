@@ -29,3 +29,129 @@ This project provides a set of analyzers that extract detailed structural inform
 - PostgreSQL database
 - JavaParser library
 - SootUp library (for call stack analysis)
+
+## Database Schema
+
+The tool creates the following tables in PostgreSQL:
+
+### class_details
+Information about Java classes and files
+```sql
+CREATE TABLE IF NOT EXISTS class_details (
+    id BIGSERIAL PRIMARY KEY,
+    package_name VARCHAR(512) NOT NULL,
+    class_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    loc INTEGER NOT NULL,
+    comment_count INTEGER NOT NULL,
+    method_count INTEGER NOT NULL,
+    class_count INTEGER NOT NULL,
+    comment_density NUMERIC NOT NULL,
+    import_count INTEGER NOT NULL,
+    imports TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### class_import_details
+Import statements used in each class
+```sql
+CREATE TABLE IF NOT EXISTS class_import_details (
+    id BIGSERIAL PRIMARY KEY,
+    class_details_id BIGINT NOT NULL,
+    package_name VARCHAR(512) NOT NULL,
+    class_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    import_name TEXT NOT NULL,
+    is_static BOOLEAN NOT NULL,
+    is_asterisk BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_details_id) REFERENCES class_details(id)
+);
+```
+
+### class_field_details
+Fields/variables declared in each class
+```sql
+CREATE TABLE IF NOT EXISTS class_field_details (
+    id BIGSERIAL PRIMARY KEY,
+    class_details_id BIGINT NOT NULL,
+    package_name VARCHAR(512) NOT NULL,
+    class_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    field_name VARCHAR(512) NOT NULL,
+    type VARCHAR(512) NOT NULL,
+    is_static BOOLEAN NOT NULL,
+    is_final BOOLEAN NOT NULL,
+    access_modifier VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_details_id) REFERENCES class_details(id)
+);
+```
+
+### method_details
+Information about class methods
+```sql
+CREATE TABLE IF NOT EXISTS method_details (
+    id BIGSERIAL PRIMARY KEY,
+    class_details_id BIGINT NOT NULL,
+    package_name VARCHAR(512) NOT NULL,
+    class_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    method_name VARCHAR(512) NOT NULL,
+    line_count INTEGER NOT NULL,
+    parameter_count INTEGER NOT NULL,
+    complexity_score INTEGER NOT NULL,
+    return_type VARCHAR(512) NOT NULL,
+    access_modifier VARCHAR(150) NOT NULL,
+    is_static BOOLEAN NOT NULL,
+    parameter_details TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_details_id) REFERENCES class_details(id)
+);
+```
+
+### method_parameter_details
+Parameters of each method
+```sql
+CREATE TABLE IF NOT EXISTS method_parameter_details (
+    id BIGSERIAL PRIMARY KEY,
+    method_details_id BIGINT NOT NULL,
+    class_details_id BIGINT NOT NULL,
+    package_name VARCHAR(512) NOT NULL,
+    class_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    method_name VARCHAR(512) NOT NULL,
+    parameter_name VARCHAR(512) NOT NULL,
+    parameter_type VARCHAR(512) NOT NULL,
+    parameter_index INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (method_details_id) REFERENCES method_details(id),
+    FOREIGN KEY (class_details_id) REFERENCES class_details(id)
+);
+```
+
+### endpoint_details
+REST API endpoints detected in the code
+```sql
+CREATE TABLE IF NOT EXISTS endpoint_details (
+    id BIGSERIAL PRIMARY KEY,
+    class_details_id BIGINT NOT NULL,
+    method_details_id BIGINT NOT NULL,
+    package_name VARCHAR(512),
+    class_name VARCHAR(512) NOT NULL,
+    method_name VARCHAR(512) NOT NULL,
+    file_name VARCHAR(512) NOT NULL,
+    file_path TEXT NOT NULL,
+    http_method VARCHAR(45) NOT NULL,
+    endpoint TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (class_details_id) REFERENCES class_details(id),
+    FOREIGN KEY (method_details_id) REFERENCES method_details(id)
+);
+```
